@@ -28,7 +28,7 @@ int main()
         //! enqueueして、結果を取り出すためのfutureオブジェクトを受け取る。
         std::future<int> future =
             tq.enqueue_sync(
-                //! キューから取り出して呼び出される際に実行される関数
+                //! キューから取り出され、呼び出される際に実行される関数
                 [](int index, int delay) -> int
                 {
                     std::this_thread::sleep_for(

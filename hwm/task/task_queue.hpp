@@ -82,7 +82,7 @@ struct task_queue
 
     //! @brief タスクに新たな処理を追加
     //! @detail enqueue_asyncとの違いは、内部locked_queueが溢れているときにも、
-    //! locked_queueへの追加は別スレッドを起動して行い、即座にfutureオブジェクトを返す点。
+    //! locked_queueへの追加は別スレッドを起動して、即座にfutureオブジェクトを返す点。
     //! @return タスクとshared stateを共有するstd::futureクラスのオブジェクト
     template<class F, class... Args>
     std::future<typename function_result_type<F, Args...>::type>
@@ -96,6 +96,9 @@ struct task_queue
         promise_t promise;
         auto future(promise.get_future());
 
+        //! ここで作成したスレッドは誰も知らなくなるが、
+        //! futureオブジェクトが呼び出し元に返ることから、
+        //! futureオブジェクトの待機によってこのスレッドの完了を保証できる。
         std::thread(
             [this]( promise_t &&promise,
                     F &&f,
