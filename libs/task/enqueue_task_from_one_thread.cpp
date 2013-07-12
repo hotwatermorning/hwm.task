@@ -5,7 +5,7 @@
 #include <functional>
 
 //! hwm::task_queueのサンプル
-int main()
+void enqueue_task_from_one_thread()
 {
     //! ランダム数列生成器
     auto random =
