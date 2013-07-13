@@ -1,8 +1,8 @@
+#include <functional>
+#include <iostream>
+#include <random>
 #include <vector>
 #include <hwm/task/task_queue.hpp>
-#include <functional>
-#include <random>
-#include <functional>
 
 void thread_process(hwm::task_queue &tq, int task_index, int delay)
 {
