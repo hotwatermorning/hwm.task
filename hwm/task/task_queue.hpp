@@ -71,7 +71,7 @@ struct task_queue
     std::future<typename function_result_type<F, Args...>::type>
             enqueue_sync(F f, Args... args)
     {
-        std::cout << "sync enqueued" << std::endl;
+//         std::cout << "sync enqueued" << std::endl;
 
         typedef typename function_result_type<F, Args...>::type func_result_t;
         typedef std::promise<func_result_t> promise_t;
@@ -98,7 +98,7 @@ struct task_queue
     std::future<typename function_result_type<F, Args...>::type>
             enqueue_async(F f, Args... args)
     {
-        std::cout << "async enqueued" << std::endl;
+//         std::cout << "async enqueued" << std::endl;
 
         typedef typename function_result_type<F, Args...>::type func_result_t;
         typedef std::promise<func_result_t> promise_t;
@@ -163,7 +163,7 @@ private:
                         bool popped = task_queue_.try_dequeue_for(task, std::chrono::seconds(1));
 
                         if(popped) {
-                            std::cout << "popped by thread[" << i << "]" << std::endl;
+//                             std::cout << "popped by thread[" << i << "]" << std::endl;
                             task->run();
                         }
                     }
