@@ -20,13 +20,15 @@ namespace detail { namespace ns_task {
 template <class T>
 struct locked_queue {
 
+    //! デフォルトコンストラクタ
     locked_queue()
-        :   capacity((std::numeric_limits<int>::max)())
+        :   capacity((std::numeric_limits<size_t>::max)())
     {}
 
+    //! コンストラクタ
     //! @param capacity 同時にキュー可能な最大要素数
     explicit
-    locked_queue(int capacity)
+    locked_queue(capacity capacity)
         :   capacity(capacity)
     {}
 
