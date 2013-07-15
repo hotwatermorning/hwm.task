@@ -1,13 +1,20 @@
 #include <thread>
 #include <mutex>
 #include <iostream>
-#include "../hwm/spin_lock/spin_lock_gcc.hpp"
+#include <hwm/spin_lock.hpp>
 
 hwm::spin_lock sl;
 int count;
 static int const num_threads = 200;
 static int const num_invokation_per_thread = 100;
 static int const expected = num_threads * num_invokation_per_thread;
+
+void sleep()
+{
+    std::this_thread::sleep_for(
+        std::chrono::seconds(0)
+        );
+}
 
 void foo()
 {
@@ -21,16 +28,7 @@ void foo()
         std::lock_guard<hwm::spin_lock> lock(sl);
         count *= 2;
 
-        int i = 0;
-        int j = 0;
-        for(int i = 0; i < 10000; ++i) {
-            j += i;
-        }
-
-        count += j;
-
-        count -= 1;
-        count -=(j-1);
+        sleep();
 
         count /= 2;
     }

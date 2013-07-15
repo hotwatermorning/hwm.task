@@ -1,0 +1,18 @@
+import os
+
+boost_root=os.environ["BOOST_ROOT"]
+cxx='g++-4.8'
+
+print "boost_root %s" % boost_root
+
+env = Environment(
+        CXX=cxx,
+        CCFLAGS='-Wall -std=c++11',
+        CPPPATH=[boost_root, '#../../'],
+        LIBPATH=['/usr/local/lib'],
+        LIBS=['stdc++', 'pthread'] )
+
+SConscript([
+    './task/SConscript',
+    './spin_lock/SConscript'],
+    exports='env' )

@@ -1,3 +1,0 @@
-import os
-env = Environment(CXX='g++-4.8', CCFLAGS='-Wall -std=c++11')
-env.Program('hwm_task_test.out', ['./main.cpp', './task/minimal_sample.cpp', './task/enqueue_task_from_one_thread.cpp', './task/enqueue_task_from_many_threads.cpp'], CPPPATH=['../../../../boost/boost_1_54_0', '../', '/usr/local/include/c++/4.8.2'], LIBS=['stdc++', 'pthread'])

@@ -32,7 +32,7 @@ void thread_process(hwm::task_queue &tq, int task_index, int delay)
 }
 
 //! hwm::task_queueのサンプル
-void enqueue_task_from_many_threads()
+int main()
 {
     //! ランダム数列生成器
     auto random =

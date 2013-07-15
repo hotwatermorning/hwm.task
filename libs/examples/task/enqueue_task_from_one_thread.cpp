@@ -1,11 +1,12 @@
 #include <vector>
-#include <hwm/task/task_queue.hpp>
 #include <functional>
 #include <random>
 #include <functional>
 
+#include <hwm/task/task_queue.hpp>
+
 //! hwm::task_queueのサンプル
-void enqueue_task_from_one_thread()
+int main()
 {
     //! ランダム数列生成器
     auto random =
