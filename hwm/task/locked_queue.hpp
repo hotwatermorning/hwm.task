@@ -28,7 +28,7 @@ struct locked_queue {
     //! コンストラクタ
     //! @param capacity 同時にキュー可能な最大要素数
     explicit
-    locked_queue(capacity capacity)
+    locked_queue(size_t capacity)
         :   capacity(capacity)
     {}
 

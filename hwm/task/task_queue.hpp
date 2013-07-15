@@ -35,7 +35,8 @@ struct task_queue
     //! デフォルトコンストラクタ
     //! std::thread::hardware_concurrency()分だけスレッドを起動する
     task_queue()
-        :   terminated_flag_(false)
+        :   task_queue_()
+        ,   terminated_flag_(false)
     {
         setup(std::thread::hardware_concurrency() || 1);
     }
@@ -45,8 +46,8 @@ struct task_queue
     //! @param thread_limit [in] 起動する引数の数
     //! @param queue_limit [in] キューに保持できるタスク数の限界
     task_queue(size_t thread_limit, size_t queue_limit = ((std::numeric_limits<size_t>::max)()))
-        :   terminated_flag_(false)
-        ,   task_queue_(queue_limit)
+        :   task_queue_(queue_limit)
+        ,   terminated_flag_(false)
     {
         BOOST_ASSERT(thread_limit >= 1);
         setup(thread_limit);
