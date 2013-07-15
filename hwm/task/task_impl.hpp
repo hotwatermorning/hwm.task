@@ -13,6 +13,7 @@
 #include <boost/preprocessor/iteration/local.hpp>
 
 #include "../function_result_type.hpp"
+#include "./invoke_task.hpp"
 #include "./task_base.hpp"
 
 namespace hwm {
@@ -53,11 +54,11 @@ struct task_impl;
         virtual\
         void    run() override final\
         {\
-            try {\
-                promise_.set_value(f_(BOOST_PP_ENUM(iteration_value, HWM_TASK_apply_member_variables, unused)));\
-            } catch(...) {\
-                promise_.set_exception(std::current_exception());\
-            }\
+            invoke_task(\
+                promise_,\
+                std::forward<F>(f_)\
+                BOOST_PP_ENUM_TRAILING(iteration_value, HWM_TASK_apply_member_variables, unused)\
+                );\
         }\
     };\
     /**/
