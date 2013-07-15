@@ -6,13 +6,14 @@ cxx='g++-4.8'
 print "boost_root %s" % boost_root
 
 env = Environment(
-        CXX=cxx,
-        CCFLAGS='-Wall -std=c++11',
-        CPPPATH=[boost_root, '#../../'],
-        LIBPATH=['/usr/local/lib'],
-        LIBS=['stdc++', 'pthread'] )
+        CXX     = cxx,
+        CCFLAGS = '-Wall -std=c++11',
+        CPPPATH = [boost_root, '#../../'],
+        LIBPATH = ['/usr/local/lib'],
+        LIBS    = ['stdc++', 'pthread'],
+        PROGSUFFIX = '.out' )
 
-SConscript([
-    './task/SConscript',
-    './spin_lock/SConscript'],
-    exports='env' )
+Export('env')
+
+SConscript('./task/SConscript', variant_dir='bin/task')
+SConscript('./spin_lock/SConscript', variant_dir='bin/spin_lock')
