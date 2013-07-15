@@ -7,6 +7,7 @@
 #define HWM_TASK_TASKQUEUE_HPP
 
 #include <future>
+#include <limits>
 #include <thread>
 #include <type_traits>
 
@@ -39,10 +40,13 @@ struct task_queue
         setup(std::thread::hardware_concurrency() || 1);
     }
 
-    //! デフォルトコンストラクタ
-    //! 引数に指定された値だけスレッドを起動する
-    task_queue(int thread_limit)
+    //! @brief コンストラクタ
+    //! @detail 引数に指定された値だけスレッドを起動する
+    //! @param thread_limit [in] 起動する引数の数
+    //! @param queue_limit [in] キューに保持できるタスク数の限界
+    task_queue(size_t thread_limit, size_t queue_limit = ((std::numeric_limits<size_t>::max)()))
         :   terminated_flag_(false)
+        ,   task_queue_(queue_limit)
     {
         BOOST_ASSERT(thread_limit >= 1);
         setup(thread_limit);
