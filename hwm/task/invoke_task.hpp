@@ -15,6 +15,7 @@ void invoke_task(std::promise<void> &promise, F &&f, Args &&... args)
 {
     try {
         f(std::forward<Args>(args)...);
+        promise.set_value();
     } catch(...) {
         promise.set_exception(std::current_exception());
     }
