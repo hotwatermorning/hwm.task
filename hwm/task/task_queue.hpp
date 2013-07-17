@@ -50,6 +50,7 @@ struct task_queue
         ,   terminated_flag_(false)
     {
         BOOST_ASSERT(thread_limit >= 1);
+        BOOST_ASSERT(queue_limit >= 1);
         setup(thread_limit);
     }
 
