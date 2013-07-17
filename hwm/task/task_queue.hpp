@@ -11,6 +11,7 @@
 #include <limits>
 #include <thread>
 #include <type_traits>
+#include <utility>
 
 #include <boost/assert.hpp>
 #include <boost/optional.hpp>

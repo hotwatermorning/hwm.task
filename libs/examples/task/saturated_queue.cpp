@@ -40,7 +40,7 @@ int main()
                 }
             );
 
-        fs.push_back(boost::move(future));
+        fs.push_back(std::move(future));
 
         {
             std::lock_guard<std::mutex> lock(m);

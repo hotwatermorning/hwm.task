@@ -41,7 +41,7 @@ struct task_impl;
         typedef typename function_result_type<F BOOST_PP_ENUM_TRAILING_PARAMS(iteration_value, Arg)>::type result_type;\
         typedef std::promise<result_type> promise_type;\
         task_impl(promise_type && promise, F && f BOOST_PP_ENUM_TRAILING_BINARY_PARAMS(iteration_value, Arg, &&arg))\
-            :   promise_(boost::move(promise))\
+            :   promise_(std::move(promise))\
             ,   f_(std::forward<F>(f))\
             BOOST_PP_ENUM_TRAILING(iteration_value, HWM_TASK_initialize_member_variables, unused)\
         {}\

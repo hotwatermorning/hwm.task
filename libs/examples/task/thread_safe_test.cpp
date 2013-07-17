@@ -40,7 +40,7 @@ int main()
                 },
                 10, 20
             );
-        fs.push_back(boost::move(f));
+        fs.push_back(std::move(f));
     }
 
     for( ; ; ) {
