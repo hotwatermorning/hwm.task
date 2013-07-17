@@ -10,13 +10,9 @@
 #include <future>
 #include <limits>
 #include <thread>
-#include <type_traits>
 #include <utility>
 
 #include <boost/assert.hpp>
-#include <boost/optional.hpp>
-#include <boost/preprocessor/cat.hpp>
-#include <boost/preprocessor/repetition.hpp>
 
 #include "../function_result_type.hpp"
 #include "../make_unique.hpp"
