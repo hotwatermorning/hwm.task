@@ -36,8 +36,6 @@ int main()
                         count /= 2;
 
                     }
-
-                    std::cout << (x1 + x2) << std::endl;
                     return x1 + x2;
                 },
                 10, 20
