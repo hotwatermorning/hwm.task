@@ -6,6 +6,7 @@
 #ifndef HWM_TASK_TASKQUEUE_HPP
 #define HWM_TASK_TASKQUEUE_HPP
 
+#include <atomic>
 #include <future>
 #include <limits>
 #include <thread>
@@ -18,7 +19,6 @@
 
 #include "../function_result_type.hpp"
 #include "../make_unique.hpp"
-#include "../spin_lock.hpp"
 
 #include "./locked_queue.hpp"
 #include "./task_impl.hpp"
@@ -94,21 +94,18 @@ struct task_queue
 private:
     locked_queue<task_ptr_t>    task_queue_;
     std::vector<std::thread>    threads_;
-    hwm::spin_lock mutable      mutex_;
-    bool                        terminated_flag_;
+    std::atomic<bool>           terminated_flag_;
 
 private:
 
     void    set_terminate_flag(bool state)
     {
-        std::lock_guard<hwm::spin_lock> lock(mutex_);
-        terminated_flag_ = state;
+        terminated_flag_.store(state);
     }
 
     bool    is_terminated() const
     {
-        std::lock_guard<hwm::spin_lock> lock(mutex_);
-        return terminated_flag_;
+        return terminated_flag_.load();
     }
 
     void    setup(int num_threads)

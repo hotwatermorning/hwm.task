@@ -16,4 +16,3 @@ env = Environment(
 Export('env')
 
 SConscript('./task/SConscript', variant_dir='bin/task')
-SConscript('./spin_lock/SConscript', variant_dir='bin/spin_lock')
