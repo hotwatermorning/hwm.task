@@ -38,6 +38,7 @@ struct task_queue
     task_queue()
         :   task_queue_()
         ,   terminated_flag_(false)
+        ,   task_count_(0)
     {
         setup(std::thread::hardware_concurrency() || 1);
     }
@@ -49,6 +50,7 @@ struct task_queue
     task_queue(size_t thread_limit, size_t queue_limit = ((std::numeric_limits<size_t>::max)()))
         :   task_queue_(queue_limit)
         ,   terminated_flag_(false)
+        ,   task_count_(0)
     {
         BOOST_ASSERT(thread_limit >= 1);
         BOOST_ASSERT(queue_limit >= 1);
@@ -87,15 +89,80 @@ struct task_queue
                 std::forward<F>(f),
                 std::forward<Args>(args)... ) );
 
-        task_queue_.enqueue(std::move(ptask));
+        {
+            task_count_lock_t lock(task_count_mutex_);
+            ++task_count_;
+        }
+
+        try {
+            task_queue_.enqueue(std::move(ptask));
+        } catch(...) {
+            task_count_lock_t lock(task_count_mutex_);
+            --task_count_;
+            if(task_count_ == 0) {
+                c_task_.notify_all();
+            }
+            throw;
+        }
 
         return future;
+    }
+
+    void    wait() const
+    {
+        task_count_lock_t lock(task_count_mutex_);
+        scoped_add sa(waiting_count_);
+
+        c_task_.wait(lock, [this]{ return task_count_ == 0; });
+    }
+
+    template<class TimePoint>
+    bool    wait_until(TimePoint tp) const
+    {
+        task_count_lock_t lock(task_count_mutex_);
+        scoped_add sa(waiting_count_);
+
+        return c_task_.wait_until(lock, tp, [this]{ return task_count_ == 0; });
+    }
+
+    template<class Duration>
+    bool    wait_for(Duration dur) const
+    {
+        task_count_lock_t lock(task_count_mutex_);
+        scoped_add sa(waiting_count_);
+
+        return c_task_.wait_for(lock, dur, [this]{ return task_count_ == 0; });
     }
 
 private:
     locked_queue<task_ptr_t>    task_queue_;
     std::vector<std::thread>    threads_;
     std::atomic<bool>           terminated_flag_;
+    std::mutex mutable          task_count_mutex_;
+    typedef std::unique_lock<std::mutex> task_count_lock_t;
+    size_t                      task_count_;
+    std::atomic<size_t> mutable waiting_count_;
+    std::condition_variable mutable c_task_;
+
+    struct scoped_add
+    {
+        scoped_add(std::atomic<size_t> &value)
+            :   v_(value)
+        {
+            v_.fetch_add(1);
+        }
+
+        ~scoped_add()
+        {
+            v_.fetch_sub(1);
+        }
+
+        scoped_add(scoped_add const &) = delete;
+        scoped_add& operator=(scoped_add const &) = delete;
+
+    private:
+        std::atomic<size_t> &v_;
+    };
 
 private:
 
@@ -109,22 +176,45 @@ private:
         return terminated_flag_.load();
     }
 
+    bool    is_waiting() const
+    {
+        return waiting_count_.load() != 0;
+    }
+
     void    setup(int num_threads)
     {
         for(int i = 0; i < num_threads; ++i) {
             std::thread th(
-                [this](int i) {
+                [this](int /*thread_index (currently unused)*/) {
                     for( ; ; ) {
                         if(is_terminated()) {
                             break;
                         }
 
                         task_ptr_t task;
-                        bool popped = task_queue_.try_dequeue_for(task, std::chrono::seconds(1));
+                        bool const popped = task_queue_.try_dequeue_for(task, std::chrono::seconds(1));
+
+                        bool should_notify = false;
 
                         if(popped) {
-//                             std::cout << "popped by thread[" << i << "]" << std::endl;
                             task->run();
+                            task_count_lock_t lock(task_count_mutex_);
+                            --task_count_;
+
+                            if(is_waiting() && task_count_ == 0) {
+                                should_notify = true;
+                            }
+                        } else {
+                            if(is_waiting()) {
+                                task_count_lock_t lock(task_count_mutex_);
+                                if(task_count_ == 0) {
+                                    should_notify = true;
+                                }
+                            }
+                        }
+
+                        if(should_notify) {
+                            c_task_.notify_all();
                         }
                     }
                 },
