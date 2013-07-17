@@ -70,7 +70,7 @@ struct task_queue
     //! @return タスクとshared stateを共有するstd::futureクラスのオブジェクト
     template<class F, class... Args>
     std::future<typename function_result_type<F, Args...>::type>
-            enqueue_sync(F f, Args... args)
+            enqueue(F f, Args... args)
     {
 //         std::cout << "sync enqueued" << std::endl;
 
@@ -87,45 +87,6 @@ struct task_queue
                 std::forward<Args>(args)... ) );
 
         task_queue_.enqueue(std::move(ptask));
-
-        return future;
-    }
-
-    //! @brief タスクに新たな処理を追加
-    //! @detail enqueue_asyncとの違いは、内部locked_queueが溢れているときにも、
-    //! locked_queueへの追加は別スレッドを起動して、即座にfutureオブジェクトを返す点。
-    //! @return タスクとshared stateを共有するstd::futureクラスのオブジェクト
-    template<class F, class... Args>
-    std::future<typename function_result_type<F, Args...>::type>
-            enqueue_async(F f, Args... args)
-    {
-//         std::cout << "async enqueued" << std::endl;
-
-        typedef typename function_result_type<F, Args...>::type func_result_t;
-        typedef std::promise<func_result_t> promise_t;
-
-        promise_t promise;
-        auto future(promise.get_future());
-
-        //! ここで作成したスレッドは誰も知らなくなるが、
-        //! futureオブジェクトが呼び出し元に返ることから、
-        //! futureオブジェクトの待機によってこのスレッドの完了を保証できる。
-        std::thread(
-            [this]( promise_t &&promise,
-                    F &&f,
-                    Args &&... args ) mutable
-            {
-                task_queue_.enqueue(
-                    hwm::make_unique<task_impl<F, Args...>>(
-                        std::move(promise),
-                        std::forward<F>(f),
-                        std::forward<Args>(args)...
-                        ) );
-            },
-            std::move(promise),
-            std::forward<F>(f),
-            std::forward<Args>(args)...
-            ).detach();
 
         return future;
     }

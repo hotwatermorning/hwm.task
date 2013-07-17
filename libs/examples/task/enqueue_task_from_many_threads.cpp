@@ -14,7 +14,7 @@ void thread_process(hwm::task_queue &tq, int task_index, int delay)
     std::vector<std::future<int>> futures;
 
     for(int sub_index = 0; sub_index < 10; ++sub_index) {
-        auto future = tq.enqueue_async(
+        auto future = tq.enqueue(
             [](int task_index, int sub_index, int delay) -> int {
                 std::cout << "run new task [" << task_index << "." << sub_index << "]" << std::endl;
 

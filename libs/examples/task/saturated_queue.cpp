@@ -30,7 +30,7 @@ int main()
         }
 
         auto future =
-            tq.enqueue_sync(
+            tq.enqueue(
                 [&m, i]() mutable {
                     {
                         std::lock_guard<std::mutex> lock(m);

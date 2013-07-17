@@ -14,7 +14,7 @@ int main()
     hwm::task_queue tq(std::thread::hardware_concurrency());
 
     std::future<int> f =
-        tq.enqueue_sync(
+        tq.enqueue(
             //! タスクキュー内のスレッドで起動する関数
             [](int x1, int x2) -> int {
                 std::cout << (x1 + x2) << std::endl;

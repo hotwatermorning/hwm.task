@@ -25,7 +25,7 @@ int main()
 
     for(int i = 0; i < num_tasks; ++i) {
         std::future<int> f =
-            tq.enqueue_sync(
+            tq.enqueue(
                 [&m, &count](int x1, int x2) -> int {
                     {
                         std::lock_guard<std::mutex> lock(m);

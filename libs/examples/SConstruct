@@ -7,7 +7,7 @@ print "boost_root %s" % boost_root
 
 env = Environment(
         CXX     = cxx,
-        CCFLAGS = '-Wall -std=c++11',
+        CCFLAGS = '-Og -Wall -std=c++11',
         CPPPATH = [boost_root, '#../../'],
         LIBPATH = ['/usr/local/lib'],
         LIBS    = ['stdc++', 'pthread'],
