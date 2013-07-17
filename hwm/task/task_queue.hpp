@@ -35,6 +35,7 @@ struct task_queue
         :   task_queue_()
         ,   terminated_flag_(false)
         ,   task_count_(0)
+        ,   wait_before_destructed_(true)
     {
         setup(std::thread::hardware_concurrency() || 1);
     }
@@ -47,6 +48,7 @@ struct task_queue
         :   task_queue_(queue_limit)
         ,   terminated_flag_(false)
         ,   task_count_(0)
+        ,   wait_before_destructed_(true)
     {
         BOOST_ASSERT(thread_limit >= 1);
         BOOST_ASSERT(queue_limit >= 1);
@@ -55,10 +57,15 @@ struct task_queue
 
     //! デストラクタ
     //! スレッドの終了を待ってデストラクトする
-    //! キューに積まれたままのタスクは実行されない。
-    //! すべて実行してから終了する版は未実装
+    //! wait_before_destructed()がtrueの場合、
+    //! キューに積まれたタスクをすべて実行してから終了する。
+    //! falseの場合、キューに積まれたままのタスクは実行されない。
+    //! wait_before_destructed()はデフォルトでtrue
     ~task_queue()
     {
+        if(wait_before_destructed()) {
+            wait();
+        }
         set_terminate_flag(true);
         join_threads();
     }
@@ -71,8 +78,6 @@ struct task_queue
     std::future<typename function_result_type<F, Args...>::type>
             enqueue(F f, Args... args)
     {
-//         std::cout << "sync enqueued" << std::endl;
-
         typedef typename function_result_type<F, Args...>::type func_result_t;
         typedef std::promise<func_result_t> promise_t;
 
@@ -104,6 +109,8 @@ struct task_queue
         return future;
     }
 
+    //! @brief すべてのタスクが実行され終わるのを待機する
+    //! @note 待機中にすべてのタスクが実行され、関数が返る場合でも、処理が呼び出し元に戻る間に任意のスレッドから新たなタスクが積まれる可能性がある。
     void    wait() const
     {
         task_count_lock_t lock(task_count_mutex_);
@@ -112,6 +119,10 @@ struct task_queue
         c_task_.wait(lock, [this]{ return task_count_ == 0; });
     }
 
+    //! @brief 指定時刻まですべてのタスクが実行され終わるのを待機する
+    //! @param [in] tp std::chrono::time_point型に変換可能な型。
+    //! @return すべてのタスクが実行され終わった場合、trueが返る。
+    //! @note 待機中にすべてのタスクが実行され、関数がtrueを返す場合でも、処理が呼び出し元に戻る間に任意のスレッドから新たなタスクが積まれる可能性がある。
     template<class TimePoint>
     bool    wait_until(TimePoint tp) const
     {
@@ -121,6 +132,10 @@ struct task_queue
         return c_task_.wait_until(lock, tp, [this]{ return task_count_ == 0; });
     }
 
+    //! @brief 指定時間内ですべてのタスクが実行され終わるのを待機する
+    //! @param [in] tp std::chrono::time_point型に変換可能な型。
+    //! @return すべてのタスクが実行され終わった場合、trueが返る。
+    //! @note 待機中にすべてのタスクが実行され、関数がtrueを返す場合でも、処理が呼び出し元に戻る間に任意のスレッドから新たなタスクが積まれる可能性がある。
     template<class Duration>
     bool    wait_for(Duration dur) const
     {
@@ -128,6 +143,20 @@ struct task_queue
         scoped_add sa(waiting_count_);
 
         return c_task_.wait_for(lock, dur, [this]{ return task_count_ == 0; });
+    }
+
+    //! @brief デストラクタが呼び出された時に、積まれているタスクがすべて実行されるまで待機するかどうかを返す。
+    //! @return デストラクタが呼び出された時にすべてのタスクの実行を終了を待機する場合はtrueが返る。
+    bool        wait_before_destructed() const
+    {
+        return wait_before_destructed_.load();
+    }
+
+    //! @brief デストラクタが呼び出された時に、積まれているタスクがすべて実行されるまで待機するかどうかを設定する。
+    //! @param [in] デストラクタが呼び出された時にすべてのタスクの実行を終了を待機するように設定する場合はtrueを渡す。
+    void        set_wait_before_destructed(bool state)
+    {
+        wait_before_destructed_.store(state);
     }
 
 private:
@@ -139,6 +168,7 @@ private:
     size_t                      task_count_;
     std::atomic<size_t> mutable waiting_count_;
     std::condition_variable mutable c_task_;
+    std::atomic<bool>           wait_before_destructed_;
 
     struct scoped_add
     {
