@@ -9,7 +9,7 @@ env = Environment(
         CXX     = cxx,
         CCFLAGS = '-Og -Wall -std=c++11',
         CPPPATH = [boost_root, '#../../'],
-        LIBPATH = ['/usr/local/lib'],
+        LIBPATH = ['/usr/local/lib, /usr/local/lib64'],
         LIBS    = ['stdc++', 'pthread'],
         PROGSUFFIX = '.out' )
 

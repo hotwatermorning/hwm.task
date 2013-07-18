@@ -6,6 +6,10 @@
 #ifndef HWM_TASK_INVOKETASK_HPP
 #define HWM_TASK_INVOKETASK_HPP
 
+#include <future>
+#include <utility>
+#include "./function.hpp"
+
 namespace hwm {
 
 namespace detail { namespace ns_task {
@@ -14,7 +18,7 @@ template<class F, class... Args>
 void invoke_task(std::promise<void> &promise, F &&f, Args &&... args)
 {
     try {
-        f(std::forward<Args>(args)...);
+        f.template call<void>(std::forward<Args>(args)...);
         promise.set_value();
     } catch(...) {
         promise.set_exception(std::current_exception());
@@ -25,7 +29,7 @@ template<class Ret, class F, class... Args>
 void invoke_task(std::promise<Ret> &promise, F &&f, Args &&... args)
 {
     try {
-        promise.set_value(f(std::forward<Args>(args)...));
+        promise.set_value(f.template call<Ret>(std::forward<Args>(args)...));
     } catch(...) {
         promise.set_exception(std::current_exception());
     }

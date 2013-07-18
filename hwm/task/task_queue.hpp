@@ -14,8 +14,7 @@
 
 #include <boost/assert.hpp>
 
-#include "../function_result_type.hpp"
-#include "../make_unique.hpp"
+#include "./function.hpp"
 
 #include "./locked_queue.hpp"
 #include "./task_impl.hpp"
@@ -71,24 +70,20 @@ struct task_queue
     }
 
     //! @brief タスクに新たな処理を追加
-    //! @detail enqueue_asyncとの違いは、内部locked_queueが溢れているときには、
-    //! locked_queueが空くまで処理をブロックする点。
+    //! @detail locked_queueが空くまで処理をブロックする
     //! @return タスクとshared stateを共有するstd::futureクラスのオブジェクト
     template<class F, class... Args>
     std::future<typename function_result_type<F, Args...>::type>
-            enqueue(F f, Args... args)
+            enqueue(F&& f, Args&& ... args)
     {
-        typedef typename function_result_type<F, Args...>::type func_result_t;
-        typedef std::promise<func_result_t> promise_t;
+        typedef typename function_result_type<F, Args...>::type result_t;
+        typedef std::promise<result_t> promise_t;
 
         promise_t promise;
         auto future(promise.get_future());
 
-        std::unique_ptr<task_base> ptask(
-            new task_impl<F, Args...>(
-                std::move(promise),
-                std::forward<F>(f),
-                std::forward<Args>(args)... ) );
+        std::unique_ptr<task_base> ptask =
+            make_task(std::move(promise), std::move(f), std::move(args)...);
 
         {
             task_count_lock_t lock(task_count_mutex_);
