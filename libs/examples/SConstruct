@@ -1,14 +1,11 @@
 import os
 
-boost_root=os.environ["BOOST_ROOT"]
 cxx='g++-4.8'
-
-print "boost_root %s" % boost_root
 
 env = Environment(
         CXX     = cxx,
         CCFLAGS = '-Og -Wall -std=c++11',
-        CPPPATH = [boost_root, '#../../'],
+        CPPPATH = ['#../../'],
         LIBPATH = ['/usr/local/lib, /usr/local/lib64'],
         LIBS    = ['stdc++', 'pthread'],
         PROGSUFFIX = '.out' )

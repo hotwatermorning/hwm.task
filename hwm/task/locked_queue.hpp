@@ -10,8 +10,6 @@
 #include <mutex>
 #include <queue>
 
-#include <boost/optional.hpp>
-
 namespace hwm {
 
 namespace detail { namespace ns_task {

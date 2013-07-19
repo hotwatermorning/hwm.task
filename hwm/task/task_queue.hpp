@@ -6,13 +6,12 @@
 #ifndef HWM_TASK_TASKQUEUE_HPP
 #define HWM_TASK_TASKQUEUE_HPP
 
+#include <cassert>
 #include <atomic>
 #include <future>
 #include <limits>
 #include <thread>
 #include <utility>
-
-#include <boost/assert.hpp>
 
 #include "./function.hpp"
 
@@ -49,8 +48,8 @@ struct task_queue
         ,   task_count_(0)
         ,   wait_before_destructed_(true)
     {
-        BOOST_ASSERT(thread_limit >= 1);
-        BOOST_ASSERT(queue_limit >= 1);
+        assert(thread_limit >= 1);
+        assert(queue_limit >= 1);
         setup(thread_limit);
     }
 
@@ -246,7 +245,7 @@ private:
 
     void    join_threads()
     {
-        BOOST_ASSERT(is_terminated());
+        assert(is_terminated());
 
         for(auto &th: threads_) {
             th.join();
