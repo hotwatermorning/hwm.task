@@ -27,6 +27,6 @@ int main()
 
     std::cout << ">>> waiting" << std::endl;
     bool const result = tq.wait_until(std::chrono::steady_clock::now() + std::chrono::seconds(1));
-    std::cout << "wait result : " << std::boolalpha << result << std::endl;
+    std::cout << "wait result (false is expected.) : " << std::boolalpha << result << std::endl;
 }
 
