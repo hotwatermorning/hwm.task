@@ -36,6 +36,7 @@ private:
     int m_;
 };
 
+//! メンバ関数呼び出しのサンプル
 int main()
 {
     //! タスクキュー
@@ -43,18 +44,18 @@ int main()
     //! 実行するスレッドの数をコンストラクタで指定する。
     hwm::task_queue tq(std::thread::hardware_concurrency());
 
+    // copy
     {
         std::future<int> f;
         {
             the_multiplication_man tm(3);
 
             f = tq.enqueue(
-                //! pass a member function.
+                //! 第一引数にメンバ関数を渡す
                 &the_multiplication_man::let_me_calculate,
-                //! 2nd argument takes an object and it will be used to
-                //! invoke a function passed as 1st argument of euqueue.
+                //! 第二引数に呼び出す対象となるオブジェクトを渡す
                 tm,
-                //! 関数に渡す引数
+                //! 続く引数はメンバ関数の呼び出し時に適用される
                 10
             );
         }
@@ -62,69 +63,69 @@ int main()
         std::cout << "calculated value : " << f.get() << std::endl;
     }
 
+    // pointer
     {
         the_multiplication_man tm(3);
 
         std::future<int> f =
             tq.enqueue(
-                //! pass a member function.
+                //! 第一引数にメンバ関数を渡す
                 &the_multiplication_man::let_me_calculate,
-                //! 2nd argument takes an object and it will be used to
-                //! invoke a function passed as 1st argument of euqueue.
+                //! 第二引数に呼び出す対象となるオブジェクトを渡す
                 &tm,
-                //! 関数に渡す引数
+                //! 続く引数はメンバ関数の呼び出し時に適用される
                 10
             );
 
         std::cout << "calculated value : " << f.get() << std::endl;
     }
 
+    // ref
     {
         the_multiplication_man tm(3);
 
         std::future<int> f =
             tq.enqueue(
-                //! pass a member function.
+                //! 第一引数にメンバ関数を渡す
                 &the_multiplication_man::let_me_calculate,
-                //! 2nd argument takes an object and it will be used to
-                //! invoke a function passed as 1st argument of euqueue.
+                //! 第二引数に呼び出す対象となるオブジェクトを渡す
                 std::ref(tm),
-                //! 関数に渡す引数
+                //! 続く引数はメンバ関数の呼び出し時に適用される
                 10
             );
 
         std::cout << "calculated value : " << f.get() << std::endl;
     }
 
+    // cref
     {
         the_multiplication_man tm(3);
 
         std::future<int> f =
             tq.enqueue(
-                //! pass a member function.
+                //! 第一引数にメンバ関数を渡す
                 &the_multiplication_man::let_me_calculate,
-                //! 2nd argument takes an object and it will be used to
-                //! invoke a function passed as 1st argument of euqueue.
+                //! 第二引数に呼び出す対象となるオブジェクトを渡す
                 std::cref(tm),
-                //! 関数に渡す引数
+                //! 続く引数はメンバ関数の呼び出し時に適用される
                 10
             );
 
         std::cout << "calculated value : " << f.get() << std::endl;
     }
 
+    // move
     {
         std::future<int> f;
 
         {
             the_uncopyable_multiplication_man tm(3);
             f = tq.enqueue(
-                //! pass a member function.
+                //! 第一引数にメンバ関数を渡す
                 &the_uncopyable_multiplication_man::let_me_calculate,
-                //! 2nd argument takes an object and it will be used to
-                //! invoke a function passed as 1st argument of euqueue.
+                //! 第二引数に呼び出す対象となるオブジェクトを渡す
                 std::move(tm),
-                //! 関数に渡す引数
+                //! 続く引数はメンバ関数の呼び出し時に適用される
                 10
             );
         }
