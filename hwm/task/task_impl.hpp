@@ -82,7 +82,7 @@ private:
         invoke_task(
             promise_,
             std::move(inv),
-            std::forward<Args>(std::get<Indecies+1>(bound_))... );
+            std::move(std::get<Indecies+1>(bound_))... );
     }
 
 private:
@@ -92,7 +92,7 @@ private:
 
 template<class R, class F, class... Args>
 std::unique_ptr<task_base>
-    make_task(std::promise<R>&& promise, F&& f, Args&&... args)
+    make_task(std::promise<R>&& promise, F f, Args... args)
 {
     return
         std::unique_ptr<task_base>(

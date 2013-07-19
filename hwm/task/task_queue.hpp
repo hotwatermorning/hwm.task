@@ -83,7 +83,7 @@ struct task_queue
         auto future(promise.get_future());
 
         std::unique_ptr<task_base> ptask =
-            make_task(std::move(promise), std::move(f), std::move(args)...);
+            make_task(std::move(promise), std::forward<F>(f), std::forward<Args>(args)...);
 
         {
             task_count_lock_t lock(task_count_mutex_);
