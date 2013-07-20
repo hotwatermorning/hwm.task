@@ -58,7 +58,9 @@ struct task_impl
     typedef invokable<F> invokable_t;
     typedef std::tuple<F, Args...> bound_t;
 
-    task_impl(std::promise<result_t> && promise, F f, Args... args)
+    task_impl(  std::promise<result_t> && promise,
+                typename std::decay<F>::type f,
+                typename std::decay<Args>::type... args )
         :   promise_(std::move(promise))
         ,   bound_(std::move(f), std::move(args)...)
     {}
@@ -98,8 +100,8 @@ std::unique_ptr<task_base>
         std::unique_ptr<task_base>(
             new task_impl<F, Args...> (
                 std::move(promise),
-                std::move(f),
-                std::move(args)...
+                std::forward<F>(f),
+                std::forward<Args>(args)...
             ));
 }
 
