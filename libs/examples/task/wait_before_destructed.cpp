@@ -6,51 +6,43 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <typeinfo>
 #include <hwm/task/task_queue.hpp>
 
 int main()
 {
     std::cout << ">>> wait before destructed" << std::endl;
+    std::future<int> f_wait;
     {
-        //! タスクキュー
-        //! キューに積まれた関数／関数オブジェクトを別スレッドで随時取り出して実行する。
-        //! 実行するスレッドの数をコンストラクタで指定する。
-        hwm::task_queue tq(1, 5);
-        for(int i = 0; i < 5; ++i) {
-            tq.enqueue(
-                //! タスクキュー内のスレッドで起動する関数
-                [i]() {
-                    std::cout << "<<< task[" << i << "]" << std::endl;
-                    std::this_thread::sleep_for(
-                        std::chrono::seconds(1)
-                        );
-                    std::cout << ">>> task[" << i << "]" << std::endl;
-                }
-            );
-        }
+        hwm::task_queue tq(1, 2);
+
+        tq.enqueue([]() { std::this_thread::sleep_for(std::chrono::seconds(1)); });
+        f_wait = tq.enqueue([](int a, int b) { return a + b; }, 10, 20);
     }
     std::cout << "<<< wait before destructed" << std::endl;
 
+    try {
+        std::cout << "10 + 20 = " << f_wait.get() << std::endl;
+    } catch(std::future_error &e) {
+        std::cout << e.what() << std::endl;
+    }
+
     std::cout << ">>> don't wait before destructed" << std::endl;
+    std::future<int> f_dont_wait;
     {
-        //! タスクキュー
-        //! キューに積まれた関数／関数オブジェクトを別スレッドで随時取り出して実行する。
-        //! 実行するスレッドの数をコンストラクタで指定する。
-        hwm::task_queue tq(1, 5);
+        hwm::task_queue tq(1, 2);
+
+        tq.enqueue([]() { std::this_thread::sleep_for(std::chrono::seconds(1)); });
+        f_dont_wait = tq.enqueue([](int a, int b) { return a + b; }, 10, 20);
+
         tq.set_wait_before_destructed(false);
-        for(int i = 0; i < 5; ++i) {
-            tq.enqueue(
-                //! タスクキュー内のスレッドで起動する関数
-                [i]() {
-                    std::cout << "<<< task[" << i << "]" << std::endl;
-                    std::this_thread::sleep_for(
-                        std::chrono::seconds(1)
-                        );
-                    std::cout << ">>> task[" << i << "]" << std::endl;
-                }
-            );
-        }
     }
     std::cout << "<<< don't wait before destructed" << std::endl;
+
+    try {
+        std::cout << "10 + 20 = " << f_dont_wait.get() << std::endl;
+    } catch(std::future_error &e) {
+        std::cout << e.what() << std::endl;
+    }
 }
 
