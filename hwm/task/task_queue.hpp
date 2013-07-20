@@ -54,12 +54,13 @@ struct task_queue
         setup(thread_limit);
     }
 
-    //! デストラクタ
-    //! スレッドの終了を待ってデストラクトする
-    //! wait_before_destructed()がtrueの場合、
-    //! キューに積まれたタスクをすべて実行してから終了する。
-    //! falseの場合、キューに積まれたままのタスクは実行されない。
-    //! wait_before_destructed()はデフォルトでtrue
+    //! @brief デストラクタ
+    //! @detail デストラクタは、スレッドの終了を待機するが、
+    //! その際にwait_before_destructed()がtrueの場合、
+    //! キューに積まれたタスクが全て実行され、すべての実行が完了してからスレッドを終了する。
+    //! falseの場合、キューに積まれたままのタスクは実行されず、
+    //! 呼び出し時点で取り出されているタスクのみ実行してスレッドを終了する。
+    //! @note wait_before_destructed()はデフォルトでtrue
     ~task_queue()
     {
         if(wait_before_destructed()) {
@@ -70,7 +71,9 @@ struct task_queue
     }
 
     //! @brief タスクに新たな処理を追加
-    //! @detail locked_queueが空くまで処理をブロックする
+    //! @detail 内部のタスクキューが一杯の時はキューが空くまで処理をブロックする
+    //! @param [in] f 別スレッドで実行したい関数や関数オブジェクトなど
+    //! @param [in] fに対して適用したい引数。Movableでなければならない。
     //! @return タスクとshared stateを共有するstd::futureクラスのオブジェクト
     template<class F, class... Args>
     std::future<typename function_result_type<F, Args...>::type>
@@ -105,7 +108,8 @@ struct task_queue
     }
 
     //! @brief すべてのタスクが実行され終わるのを待機する
-    //! @note 待機中にすべてのタスクが実行され、関数が返る場合でも、処理が呼び出し元に戻る間に任意のスレッドから新たなタスクが積まれる可能性がある。
+    //! @note wait()メンバ関数は、タスクの実行を待機するだけで、enqueue()の呼び出しはブロックしない。
+    //! そのためすべてのタスクが実行され、wait()関数から処理が戻る場合でも、処理が呼び出し元に戻る間に任意のスレッドから新たなタスクが積まれる可能性がある。
     void    wait() const
     {
         task_count_lock_t lock(task_count_mutex_);
@@ -115,9 +119,11 @@ struct task_queue
     }
 
     //! @brief 指定時刻まですべてのタスクが実行され終わるのを待機する
-    //! @param [in] tp std::chrono::time_point型に変換可能な型。
+    //! @tparam TimePoint std::chrono::time_point型に変換可能な型
+    //! @param [in] tp すべてのタスクの実行完了を、どの時刻まで待機するか。
     //! @return すべてのタスクが実行され終わった場合、trueが返る。
-    //! @note 待機中にすべてのタスクが実行され、関数がtrueを返す場合でも、処理が呼び出し元に戻る間に任意のスレッドから新たなタスクが積まれる可能性がある。
+    //! @note wait_until()メンバ関数は、タスクの実行を待機するだけで、enqueue()の呼び出しはブロックしない。
+    //! そのためすべてのタスクが実行され、wait_until()関数がtrueを返した場合でも、処理が呼び出し元に戻る間に任意のスレッドから新たなタスクが積まれる可能性がある。
     template<class TimePoint>
     bool    wait_until(TimePoint tp) const
     {
@@ -128,9 +134,11 @@ struct task_queue
     }
 
     //! @brief 指定時間内ですべてのタスクが実行され終わるのを待機する
-    //! @param [in] tp std::chrono::time_point型に変換可能な型。
+    //! @tparam Duration std::chrono::duration型に変換可能な型
+    //! @param [in] tp すべてのタスクの実行完了を、どのくらい時間だけ待機するか。
     //! @return すべてのタスクが実行され終わった場合、trueが返る。
-    //! @note 待機中にすべてのタスクが実行され、関数がtrueを返す場合でも、処理が呼び出し元に戻る間に任意のスレッドから新たなタスクが積まれる可能性がある。
+    //! @note wait_for()メンバ関数は、タスクの実行を待機するだけで、enqueue()の呼び出しはブロックしない。
+    //! そのためすべてのタスクが実行され、wait_for()関数がtrueを返した場合でも、処理が呼び出し元に戻る間に任意のスレッドから新たなタスクが積まれる可能性がある。
     template<class Duration>
     bool    wait_for(Duration dur) const
     {
