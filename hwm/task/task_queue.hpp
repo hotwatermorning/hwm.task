@@ -42,6 +42,7 @@ struct task_queue
     //! @detail 引数に指定された値だけスレッドを起動する
     //! @param thread_limit [in] 起動する引数の数
     //! @param queue_limit [in] キューに保持できるタスク数の限界
+    explicit
     task_queue(size_t thread_limit, size_t queue_limit = ((std::numeric_limits<size_t>::max)()))
         :   task_queue_(queue_limit)
         ,   terminated_flag_(false)
