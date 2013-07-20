@@ -56,7 +56,7 @@ struct task_impl
     typedef std::promise<result_t> promise_t;
 
     typedef invokable<F> invokable_t;
-    typedef std::tuple<F, Args...> bound_t;
+    typedef std::tuple<typename std::decay<F>::type, typename std::decay<Args>::type...> bound_t;
 
     task_impl(  std::promise<result_t> && promise,
                 typename std::decay<F>::type f,
