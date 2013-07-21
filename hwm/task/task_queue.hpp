@@ -35,7 +35,9 @@ struct task_queue
         ,   task_count_(0)
         ,   wait_before_destructed_(true)
     {
-        setup(std::thread::hardware_concurrency() || 1);
+        setup(
+            (std::max)(std::thread::hardware_concurrency(), 1u)
+            );
     }
 
     //! @brief コンストラクタ
