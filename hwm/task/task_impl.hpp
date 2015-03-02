@@ -1,18 +1,15 @@
-//          Copyright hotwatermorning 2013 - 2013.
+﻿//          Copyright hotwatermorning 2013 - 2013.
 // Distributed under the Boost Software License, Version 1.0.
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#ifndef HWM_TASK_TASKIMPL_HPP
-#define HWM_TASK_TASKIMPL_HPP
+#pragma once
 
 #include <cstddef>
 #include <future>
 #include <tuple>
 #include <type_traits>
 
-#include "./function.hpp"
-#include "./invoke_task.hpp"
 #include "./task_base.hpp"
 
 namespace hwm {
@@ -47,18 +44,46 @@ struct make_index_tuple
     type;
 };
 
+template<typename Functor, typename... Args>
+typename std::enable_if<
+	std::is_member_pointer<typename std::decay<Functor>::type>::value,
+	typename std::result_of<Functor&&(Args&&...)>::type
+>::type
+	invoke(Functor&& f, Args&&... args)
+{
+	return std::mem_fn(f)(std::forward<Args>(args)...);
+}
+
+template<typename Functor, typename... Args>
+typename std::enable_if<
+	!std::is_member_pointer<typename std::decay<Functor>::type>::value,
+	typename std::result_of<Functor&&(Args&&...)>::type
+>::type
+	invoke(Functor&& f, Args&&... args)
+{
+	return std::forward<Functor>(f)(std::forward<Args>(args)...);
+}
+
+//! Implement INVOKE functionality in terms of existing C++11 standard library components.
+/*!
+	@see http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2013/n3727.html
+*/
+template<typename Return, typename Functor, typename... Args>
+Return invoke(Functor&& f, Args&&... args)
+{
+	return invoke(std::forward<Functor>(f), std::forward<Args>(args)...);
+}
+
 //! F and Args are decayed
-template<class F, class... Args>
+template<class Ret, class F, class... Args>
 struct task_impl
     :   task_base
 {
-    typedef typename function_result_type<F, Args...>::type result_t;
-    typedef std::promise<result_t> promise_t;
+    typedef std::promise<Ret> promise_t;
 
-    typedef invokable<F> invokable_t;
     typedef std::tuple<typename std::decay<F>::type, typename std::decay<Args>::type...> bound_t;
 
-    task_impl(  std::promise<result_t> && promise,
+    task_impl(  promise_t && promise,
                 typename std::decay<F>::type f,
                 typename std::decay<Args>::type... args )
         :   promise_(std::move(promise))
@@ -73,32 +98,49 @@ private:
     void run() override final
     {
         typedef typename make_index_tuple<sizeof...(Args)>::type index_t;
-        invoke(index_t());
+        invoke_task(index_t());
     }
 
     template<std::size_t... Indecies>
-    void invoke(index_tuple<Indecies...>)
+    void invoke_task(index_tuple<Indecies...>)
     {
-        F &&ref = std::move(std::get<0>(bound_));
-        invokable_t inv(std::move(ref));
-        invoke_task(
-            promise_,
-            std::move(inv),
-            std::move(std::get<Indecies+1>(bound_))... );
+		try {
+			invoke_impl(
+				promise_,
+				std::move(std::get<0>(bound_)),
+				std::move(std::get<Indecies+1>(bound_))... );
+		} catch(...) {
+			promise_.set_exception(std::current_exception());
+		}
     }
+
+	template<class Func, class... FuncArgs>
+	static void invoke_impl(std::promise<void> &promise, Func &&f, FuncArgs&&... args)
+	{
+		invoke(std::forward<Func>(f), std::forward<FuncArgs>(args)...);
+		promise.set_value();
+	}
+
+	template<class FuncRet, class Func, class... FuncArgs>
+	static void invoke_impl(std::promise<FuncRet> &promise, Func &&f, FuncArgs&&... args)
+	{
+		promise.set_value(
+			invoke(std::forward<Func>(f), std::forward<FuncArgs>(args)...)
+			);
+	}
 
 private:
     promise_t   promise_;
     bound_t     bound_;
 };
 
-template<class R, class F, class... Args>
+template<class Ret, class F, class... Args>
 std::unique_ptr<task_base>
-    make_task(std::promise<R>&& promise, F f, Args... args)
+    make_task(std::promise<Ret>&& promise, F f, Args... args)
 {
     return
         std::unique_ptr<task_base>(
-            new task_impl<F, Args...> (
+            new task_impl<Ret, F, Args...> (
                 std::move(promise),
                 std::forward<F>(f),
                 std::forward<Args>(args)...
@@ -108,6 +150,3 @@ std::unique_ptr<task_base>
 }}  //namespace detail::ns_task
 
 }   //namespace hwm
-
-#endif  //HWM_TASK_TASKIMPL_HPP
-
