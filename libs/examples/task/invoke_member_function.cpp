@@ -27,8 +27,20 @@ struct the_uncopyable_multiplication_man
     the_uncopyable_multiplication_man(the_uncopyable_multiplication_man const &) = delete;
     the_uncopyable_multiplication_man & operator=(the_uncopyable_multiplication_man const &) = delete;
 
+#if defined(_MSC_VER)
+    the_uncopyable_multiplication_man(the_uncopyable_multiplication_man &&rhs)
+        :   m_(rhs.m_)
+    {}
+
+    the_uncopyable_multiplication_man & operator=(the_uncopyable_multiplication_man &&rhs)
+    {
+        m_ = rhs.m_;
+        return *this;
+    }
+#else
     the_uncopyable_multiplication_man(the_uncopyable_multiplication_man &&) = default;
     the_uncopyable_multiplication_man & operator=(the_uncopyable_multiplication_man &&) = default;
+#endif
 
     int    let_me_calculate(int n) const { return n * m_; }
 
