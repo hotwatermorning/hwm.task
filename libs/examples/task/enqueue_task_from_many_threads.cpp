@@ -34,7 +34,7 @@ void worker_thread(hwm::task_queue &tq, int thread_index)
     hwm::mcout << "Finished to enqueue tasks[" << thread_index << "]" << std::endl;
 
     //! 全てのタスクが完了したらスレッドを終わる。
-    for(int task_index = 0; task_index < 10; ++task_index) {
+    for(int task_index = 0; task_index < kTaskPerThread; ++task_index) {
         futures[task_index].wait();
     }
 
