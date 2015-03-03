@@ -14,11 +14,9 @@
 //! hwm::task_queueのサンプル
 int main()
 {
+
     //! ランダム数列生成器
-    auto random =
-        std::bind(
-            std::uniform_int_distribution<int>(0, 1000),
-            std::mt19937() );
+    auto random_delay = std::bind(std::uniform_int_distribution<int>(0, 1000), std::mt19937());
 
     //! タスクキュー
     //! キューに積まれた関数／関数オブジェクトを別スレッドで随時取り出して実行する。
@@ -34,7 +32,7 @@ int main()
         //! enqueueして、結果を取り出すためのfutureオブジェクトを受け取る。
         std::future<int> future =
             tq.enqueue(
-                //! キューから取り出され、呼び出される際に実行される関数
+                //! タスクがキューから取り出されて実行される時の処理
                 [](int index, int delay) -> int
                 {
                     std::this_thread::sleep_for(
@@ -44,14 +42,19 @@ int main()
                     return index;
                 },
                 task_index,
-                random()
+                random_delay()
                 );
 
         //! futureオブジェクトを保持
         futures.push_back(std::move(future));
     }
 
+    //! task_queueで非同期にタスクを実行中...
+
+
+    //! タスク終了を待機する。
     for( ; ; ) {
+
         if(futures.empty()) {
             break;
         }
@@ -72,3 +75,4 @@ int main()
 
     std::cout << "finished" << std::endl;
 }
+

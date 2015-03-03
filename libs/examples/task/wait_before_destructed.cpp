@@ -4,45 +4,48 @@
 //          http://www.boost.org/LICENSE_1_0.txt)
 
 #include <chrono>
-#include <iomanip>
 #include <iostream>
-#include <typeinfo>
+#include <sstream>
+
 #include <hwm/task/task_queue.hpp>
+#include "../utils/stream_mutex.hpp"
+
+//! タスクキューが破棄される際に、積まれているタスクがすべて実行されるのを待つか、
+//! まだ取り出されていないタスクは破棄して、そのままタスクキューを破棄するかを設定する、
+//! set_wait_before_destructed()メンバ関数のサンプル
 
 int main()
 {
-    std::cout << ">>> wait before destructed" << std::endl;
-    std::future<int> f_wait;
+    hwm::mcout << ">>> wait before destructed" << std::endl;
+
     {
-        hwm::task_queue tq(1, 2);
+        hwm::task_queue tq(1);
 
-        tq.enqueue([]() { std::this_thread::sleep_for(std::chrono::seconds(1)); });
-        f_wait = tq.enqueue([](int a, int b) { return a + b; }, 10, 20);
-    }
-    std::cout << "<<< wait before destructed" << std::endl;
+        tq.enqueue([]() {
+            std::this_thread::sleep_for(std::chrono::seconds(1)); 
+            });
 
-    try {
-        std::cout << "10 + 20 = " << f_wait.get() << std::endl;
-    } catch(std::future_error &e) {
-        std::cout << e.what() << std::endl;
+        tq.enqueue([]() {
+            hwm::mcout << "this task may be executed" << std::endl;
+            });
     }
 
-    std::cout << ">>> don't wait before destructed" << std::endl;
-    std::future<int> f_dont_wait;
-    {
-        hwm::task_queue tq(1, 2);
+    hwm::mcout << "<<< wait before destructed" << std::endl;
 
-        tq.enqueue([]() { std::this_thread::sleep_for(std::chrono::seconds(1)); });
-        f_dont_wait = tq.enqueue([](int a, int b) { return a + b; }, 10, 20);
+    hwm::mcout << ">>> don't wait before destructed" << std::endl;
+    {
+        hwm::task_queue tq(1);
+
+        tq.enqueue([]() {
+            std::this_thread::sleep_for(std::chrono::seconds(1)); 
+            });
+
+        tq.enqueue([]() {
+            hwm::mcout << "this task may not be executed" << std::endl;
+            });
 
         tq.set_wait_before_destructed(false);
     }
-    std::cout << "<<< don't wait before destructed" << std::endl;
-
-    try {
-        std::cout << "10 + 20 = " << f_dont_wait.get() << std::endl;
-    } catch(std::future_error &e) {
-        std::cout << e.what() << std::endl;
-    }
+    hwm::mcout << "<<< don't wait before destructed" << std::endl;
 }
 

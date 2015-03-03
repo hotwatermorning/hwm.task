@@ -3,73 +3,68 @@
 //    (See accompanying file LICENSE_1_0.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <functional>
 #include <iostream>
-#include <random>
 #include <vector>
 #include <hwm/task/task_queue.hpp>
+#include "../utils/stream_mutex.hpp"
 
-void thread_process(hwm::task_queue &tq, int task_index, int delay)
+hwm::task_queue tq(20);
+
+int const kTaskPerThread = 1000;
+
+//! タスクキューにタスクを追加するワーカースレッド
+void worker_thread(hwm::task_queue &tq, int thread_index)
 {
-    std::vector<std::future<int>> futures;
+    std::vector<std::future<void>> futures;
 
-    for(int sub_index = 0; sub_index < 10; ++sub_index) {
+    for(int task_index = 0; task_index < kTaskPerThread; ++task_index) {
+
         auto future = tq.enqueue(
-            [](int task_index, int sub_index, int delay) -> int {
-                std::cout << "run new task [" << task_index << "." << sub_index << "]" << std::endl;
-
-                std::this_thread::sleep_for(
-                    std::chrono::milliseconds(delay)
-                    );
-
-                return task_index;
+            [](int thread_index, int task_index) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                if((task_index+1) % 100 == 0) {
+                    hwm::mcout << "thread [" << thread_index << "]( " << (task_index+1) * 100 / (kTaskPerThread) << "% )" << std::endl;
+                }
             },
-            task_index,
-            sub_index,
-            delay );
+            thread_index,
+            task_index
+            );
 
         futures.push_back(std::move(future));
     }
 
-    for(int sub_index = 0; sub_index < 10; ++sub_index) {
-        futures[sub_index].wait();
+    hwm::mcout << "Finished to enqueue tasks[" << thread_index << "]" << std::endl;
+
+    //! 全てのタスクが完了したらスレッドを終わる。
+    for(int task_index = 0; task_index < 10; ++task_index) {
+        futures[task_index].wait();
     }
+
+    hwm::mcout << "Finish worker thread[" << thread_index << "]" << std::endl;
 }
 
 //! hwm::task_queueのサンプル
 int main()
 {
-    //! ランダム数列生成器
-    auto random =
-        std::bind(
-            std::uniform_int_distribution<int>(0, 1000),
-            std::mt19937() );
-
     //! タスクキュー
     //! キューに積まれた関数／関数オブジェクトを別スレッドで随時取り出して実行する。
     //! 実行するスレッドの数をコンストラクタで指定する。
-    hwm::task_queue tq(20 + std::thread::hardware_concurrency());
+    hwm::task_queue tq(20);
 
-    //! 結果を取得するためのfutureを保持
-    std::vector<std::future<int>> futures;
-    std::vector<std::thread> ths;
+    std::vector<std::thread> workers;
 
     //! 30個分のタスクを生成。
-    for(int task_index = 0; task_index < 30; ++task_index) {
-        std::cout << "Add task : " << task_index << std::endl;
+    for(int thread_index = 0; thread_index < 30; ++thread_index) {
+        hwm::mcout << "Create worker thread[" << thread_index << "]" << std::endl;
 
-        std::thread th(
-            thread_process,
-            std::ref(tq),
-            task_index,
-            random() );
-
-        ths.push_back(std::move(th));
+        std::thread worker(worker_thread, std::ref(tq), thread_index);
+        workers.push_back(std::move(worker));
     }
 
-    for(auto &th: ths) {
-        th.join();
+    for(auto &worker: workers) {
+        worker.join();
     }
 
-    std::cout << "finished" << std::endl;
+    hwm::mcout << "finish" << std::endl;
 }
+

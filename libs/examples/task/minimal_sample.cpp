@@ -11,7 +11,7 @@ int main()
     //! タスクキュー
     //! キューに積まれた関数／関数オブジェクトを別スレッドで随時取り出して実行する。
     //! 実行するスレッドの数をコンストラクタで指定する。
-    hwm::task_queue tq(std::thread::hardware_concurrency());
+    hwm::task_queue tq(1);
 
     std::future<int> f =
         tq.enqueue(
@@ -24,5 +24,8 @@ int main()
             10, 20
         );
 
+    //! 引数に渡したラムダ式が非同期で実行される
+
+    //! ラムダ式の実行完了を待って、結果を表示
     std::cout << "calculated value : " << f.get() << std::endl;
 }

@@ -5,55 +5,52 @@
 
 #include <iostream>
 #include <deque>
-#include <mutex>
+#include <random>
+#include <functional>
 #include <hwm/task/task_queue.hpp>
+#include "../utils/stream_mutex.hpp"
+
+//! タスクキューのサイズを制限して、順次データが取り出されるまで、enqueueがブロックされる挙動のサンプル。
 
 int main()
 {
-    int const num_threads = 3;
-    int const num_queue = 3;
-    int const num_tasks = 30;
+    auto random_delay = std::bind(std::uniform_int_distribution<int>(300, 1000), std::mt19937());
+
+    int const num_threads = 2;
+    int const num_queue = 2;
+    int const num_tasks = 15;
 
     //! タスクキュー
     //! キューに積まれた関数／関数オブジェクトを別スレッドで随時取り出して実行する。
     //! 実行するスレッドの数をコンストラクタで指定する。
     hwm::task_queue tq(num_threads, num_queue);
 
-    std::deque<std::future<void>> fs;
-
-    std::mutex m;
+    std::deque<std::future<void>> futures;
 
     for(int i = 0; i < num_tasks; ++i) {
-        {
-            std::lock_guard<std::mutex> lock(m);
-            std::cout << ">>> enqueue [" << i << "]" << std::endl;
-        }
+        hwm::mcout << ">>> Want to enqueue [" << i << "]" << std::endl;
+        auto delay = random_delay();
 
         auto future =
             tq.enqueue(
-                [&m, i]() mutable {
-                    {
-                        std::lock_guard<std::mutex> lock(m);
-                        std::cout << "--- run [" << i << "]" << std::endl;
-                    }
-                    std::this_thread::sleep_for(std::chrono::seconds(1));
+                [i, delay]() {
+                    hwm::mcout << "--- execute [" << i << "]" << std::endl;
+
+                    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
                 }
             );
 
-        fs.push_back(std::move(future));
+        futures.push_back(std::move(future));
 
-        {
-            std::lock_guard<std::mutex> lock(m);
-            std::cout << "<<< enqueue [" << i << "]" << std::endl;
-        }
+        hwm::mcout << "<<< Enqueued [" << i << "]" << std::endl;
     }
 
     for( ; ; ) {
-        if(fs.empty()) {
+        if(futures.empty()) {
             break;
         }
-        fs[0].wait();
-        fs.pop_front();
+        futures[0].wait();
+        futures.pop_front();
     }
 }
 
