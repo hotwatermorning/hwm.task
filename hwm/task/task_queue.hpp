@@ -107,11 +107,10 @@ struct task_queue_with_allocator
 		キューからタスクを取り出した後で、そのタスクを実行する。
 	*/
     template<class F, class... Args>
-    auto enqueue(F&& f, Args&& ... args) -> std::future<decltype(f(std::forward<Args>(args)...))>
+    auto enqueue(F&& f, Args&& ... args) -> 
+        std::future<decltype(std::bind(std::forward<F>(f), std::forward<Args>(args)...)())>
     {
-		assert(!is_terminated());
-
-        typedef decltype(f(std::forward<Args>(args)...)) result_t;
+        typedef decltype(std::bind(std::forward<F>(f), std::forward<Args>(args)...)()) result_t;
         typedef std::promise<result_t> promise_t;
 
         promise_t promise;
