@@ -11,4 +11,4 @@ env = Environment(
 
 Export('env')
 
-SConscript('./task/SConscript', variant_dir='bin/task')
+SConscript('./task/SConscript', variant_dir='bin')
