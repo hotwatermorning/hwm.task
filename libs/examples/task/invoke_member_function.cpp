@@ -6,67 +6,65 @@
 #include <iostream>
 #include <hwm/task/task_queue.hpp>
 
-struct the_multiplication_man
+struct multiply
 {
-    the_multiplication_man(int m)
+    multiply(int m)
         :   m_(m)
     {}
 
-    int    let_me_calculate(int n) const { return n * m_; }
+    int    do_calculate(int n) const { return n * m_; }
 
 private:
     int m_;
 };
 
-struct the_uncopyable_multiplication_man
+struct multiply_uncopyable
 {
-    the_uncopyable_multiplication_man(int m)
+    multiply_uncopyable(int m)
         :   m_(m)
     {}
 
-    the_uncopyable_multiplication_man(the_uncopyable_multiplication_man const &) = delete;
-    the_uncopyable_multiplication_man & operator=(the_uncopyable_multiplication_man const &) = delete;
+    multiply_uncopyable(multiply_uncopyable const &) = delete;
+    multiply_uncopyable & operator=(multiply_uncopyable const &) = delete;
 
 #if defined(_MSC_VER)
-    the_uncopyable_multiplication_man(the_uncopyable_multiplication_man &&rhs)
+    multiply_uncopyable(multiply_uncopyable &&rhs)
         :   m_(rhs.m_)
     {}
 
-    the_uncopyable_multiplication_man & operator=(the_uncopyable_multiplication_man &&rhs)
+    multiply_uncopyable & operator=(multiply_uncopyable &&rhs)
     {
         m_ = rhs.m_;
         return *this;
     }
 #else
-    the_uncopyable_multiplication_man(the_uncopyable_multiplication_man &&) = default;
-    the_uncopyable_multiplication_man & operator=(the_uncopyable_multiplication_man &&) = default;
+    multiply_uncopyable(multiply_uncopyable &&) = default;
+    multiply_uncopyable & operator=(multiply_uncopyable &&) = default;
 #endif
 
-    int    let_me_calculate(int n) const { return n * m_; }
+    int    do_calculate(int n) const { return n * m_; }
 
 private:
     int m_;
 };
 
 //! メンバ関数呼び出しのサンプル
+
 int main()
 {
-    //! タスクキュー
-    //! キューに積まれた関数／関数オブジェクトを別スレッドで随時取り出して実行する。
-    //! 実行するスレッドの数をコンストラクタで指定する。
-    hwm::task_queue tq(std::thread::hardware_concurrency());
+    hwm::task_queue tq(1);
 
     // copy
     {
         std::future<int> f;
         {
-            the_multiplication_man tm(3);
+            multiply m(3);
 
             f = tq.enqueue(
                 //! 第一引数にメンバ関数を渡す
-                &the_multiplication_man::let_me_calculate,
-                //! 第二引数に呼び出す対象となるオブジェクトを渡す
-                tm,
+                &multiply::do_calculate,
+                //! 第二引数にそのメンバ関数を呼び出すオブジェクトをコピーして渡せる
+                m,
                 //! 続く引数はメンバ関数の呼び出し時に適用される
                 10
             );
@@ -77,14 +75,14 @@ int main()
 
     // pointer
     {
-        the_multiplication_man tm(3);
+        multiply m(3);
 
         std::future<int> f =
             tq.enqueue(
                 //! 第一引数にメンバ関数を渡す
-                &the_multiplication_man::let_me_calculate,
-                //! 第二引数に呼び出す対象となるオブジェクトを渡す
-                &tm,
+                &multiply::do_calculate,
+                //! 第二引数にそのメンバ関数を呼び出すオブジェクトのポインタを渡せる
+                &m,
                 //! 続く引数はメンバ関数の呼び出し時に適用される
                 10
             );
@@ -94,14 +92,15 @@ int main()
 
     // ref
     {
-        the_multiplication_man tm(3);
+        multiply m(3);
 
         std::future<int> f =
             tq.enqueue(
                 //! 第一引数にメンバ関数を渡す
-                &the_multiplication_man::let_me_calculate,
-                //! 第二引数に呼び出す対象となるオブジェクトを渡す
-                std::ref(tm),
+                &multiply::do_calculate,
+                //! 第二引数にそのメンバ関数を呼び出すオブジェクトの参照を渡せる
+                //! 参照は直接渡せないので、std::ref()にくるむ
+                std::ref(m),
                 //! 続く引数はメンバ関数の呼び出し時に適用される
                 10
             );
@@ -111,14 +110,15 @@ int main()
 
     // cref
     {
-        the_multiplication_man tm(3);
+        multiply m(3);
 
         std::future<int> f =
             tq.enqueue(
                 //! 第一引数にメンバ関数を渡す
-                &the_multiplication_man::let_me_calculate,
-                //! 第二引数に呼び出す対象となるオブジェクトを渡す
-                std::cref(tm),
+                &multiply::do_calculate,
+                //! 第二引数にそのメンバ関数を呼び出すオブジェクトのconst参照を渡せる
+                //! const参照は直接渡せないので、std::cref()にくるむ
+                std::cref(m),
                 //! 続く引数はメンバ関数の呼び出し時に適用される
                 10
             );
@@ -131,12 +131,12 @@ int main()
         std::future<int> f;
 
         {
-            the_uncopyable_multiplication_man tm(3);
+            multiply_uncopyable m(3);
             f = tq.enqueue(
                 //! 第一引数にメンバ関数を渡す
-                &the_uncopyable_multiplication_man::let_me_calculate,
-                //! 第二引数に呼び出す対象となるオブジェクトを渡す
-                std::move(tm),
+                &multiply_uncopyable::do_calculate,
+                //! 第二引数にそのメンバ関数を呼び出すオブジェクトをmoveして渡せる
+                std::move(m),
                 //! 続く引数はメンバ関数の呼び出し時に適用される
                 10
             );
