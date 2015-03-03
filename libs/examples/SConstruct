@@ -1,9 +1,8 @@
 import os
 
-cxx='g++-4.8'
-
 env = Environment(
-        CXX     = cxx,
+        ENV = os.environ,
+        CXX = os.environ['CXX'],
         CCFLAGS = '-Og -Wall -std=c++11',
         CPPPATH = ['#../../'],
         LIBPATH = ['/usr/local/lib, /usr/local/lib64'],
