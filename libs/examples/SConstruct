@@ -1,18 +1,35 @@
 import os
+import sys
 
-try:
-    cxx = os.environ['CXX']
-except KeyError:
-    cxx = 'g++'
+if sys.platform == "win32":
 
-env = Environment(
+    path = ["C:/Program Files (x86)/Microsoft Visual Studio 12.0/VC/bin"]
+    path.extend(os.environ["PATH"])
+
+    cpppath = ["#../../"]
+
+    env = Environment(
+        PATH = path,
+        CXX = "cl.exe",
+        CCFLAGS = "/EHsc /Gm /W3 /nologo /Gd /Od /Zi /MTd /D_DEBUG",
+        CPPPATH = cpppath,
+        LINKFLAGS = "/DEBUG /PDB:${TARGET}.pdb"
+        )
+else:
+    try:
+        cxx = os.environ['CXX']
+    except KeyError:
+        cxx = 'g++'
+
+    env = Environment(
         ENV = os.environ,
         CXX = cxx,
         CCFLAGS = '-Og -Wall -std=c++11',
         CPPPATH = ['#../../'],
         LIBPATH = ['/usr/local/lib, /usr/local/lib64'],
         LIBS    = ['stdc++', 'pthread'],
-        PROGSUFFIX = '.out' )
+        PROGSUFFIX = '.out'
+        )
 
 Export('env')
 
