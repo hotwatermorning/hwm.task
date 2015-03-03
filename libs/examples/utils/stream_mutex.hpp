@@ -3,7 +3,8 @@
 #include <iostream>
 #include <mutex>
 
-//! $B$3$NDs0F$r;29M$K$7$?(B http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3395.html
+//! この提案を参考にした
+//! http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2012/n3395.html
 
 namespace hwm {
 
@@ -50,29 +51,28 @@ public:
 
     stream_type & bypass() const { return *stream_; }
 
+    template<class T>
+    stream_guard<Stream> const &
+        operator<<(T &&arg) const
+    {
+        bypass() << std::forward<T>(arg);
+        return *this;
+    }
+
+    stream_guard<Stream> const &
+        operator<<(
+            Stream & (*manip)(Stream &)
+            ) const
+    {
+        bypass() << manip;
+        return *this;
+    }
+
 private:
     stream_type * stream_;
     std::unique_lock<std::mutex> lock_;
 };
 
-template<class Stream, class T>
-stream_guard<Stream> const &
-    operator<<(stream_guard<Stream> const &os, T &&arg)
-{
-    os.bypass() << std::forward<T>(arg);
-    return os;
-}
-
-template<class Stream>
-stream_guard<Stream> const &
-    operator<<(
-        stream_guard<Stream> const &os,
-        Stream & (*manip)(Stream &)
-        )
-{
-    os.bypass() << manip;
-    return os;
-}
 
 template<class Stream>
 struct stream_mutex
@@ -91,31 +91,30 @@ struct stream_mutex
     std::mutex & get_mutex() { return mtx_; }
     stream_type & bypass() { return *stream_; }
 
+    template <class T>
+    stream_guard<Stream>
+        operator<<(T &&arg)
+    {
+        auto guard = this->hold();
+        guard << std::forward<T>(arg);
+        return guard;
+    }
+
+    stream_guard<Stream>
+        operator<<(
+            Stream & (*manip)(Stream &)
+            )
+    {
+        auto guard = this->hold();
+        guard << manip;
+        return guard;
+    }
+
 private:
     std::mutex mtx_;
     stream_type *stream_;
 };
 
-template <class Stream, class T>
-stream_guard<Stream>
-    operator<<(stream_mutex<Stream> &mtx, T &&arg)
-{
-    auto guard = mtx.hold();
-    guard << std::forward<T>(arg);
-    return guard;
-}
-
-template <class Stream>
-stream_guard<Stream>
-    operator<<(
-        stream_mutex<Stream> &mtx,
-        Stream & (*manip)(Stream &)
-        )
-{
-    auto guard = mtx.hold();
-    guard << manip;
-    return guard;
-}
 
 template<class Stream>
 stream_mutex<Stream> make_stream_mutex(Stream &stream)
