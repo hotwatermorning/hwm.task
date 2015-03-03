@@ -8,8 +8,6 @@
 #include <hwm/task/task_queue.hpp>
 #include "../utils/stream_mutex.hpp"
 
-hwm::task_queue tq(20);
-
 int const kTaskPerThread = 1000;
 
 //! タスクキューにタスクを追加するワーカースレッド
