@@ -1,8 +1,13 @@
 import os
 
+try:
+    cxx = os.environ['CXX']
+except KeyError:
+    cxx = 'g++'
+
 env = Environment(
         ENV = os.environ,
-        CXX = os.environ['CXX'],
+        CXX = cxx,
         CCFLAGS = '-Og -Wall -std=c++11',
         CPPPATH = ['#../../'],
         LIBPATH = ['/usr/local/lib, /usr/local/lib64'],
