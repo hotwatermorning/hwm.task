@@ -22,7 +22,8 @@ int main()
 
     //! タスクキュー
     //! キューに積まれた関数／関数オブジェクトを別スレッドで随時取り出して実行する。
-    //! 実行するスレッドの数をコンストラクタで指定する。
+    //! 実行するスレッドの数をコンストラクタで指定する。 
+    //
     hwm::task_queue tq(num_threads, num_queue);
 
     std::deque<std::future<void>> futures;
