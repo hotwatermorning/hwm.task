@@ -9,6 +9,7 @@
 #include "../utils/stream_mutex.hpp"
 
 int const kTaskPerThread = 1000;
+int const kNumThreads = 30;
 
 //! タスクキューにタスクを追加するワーカースレッド
 void worker_thread(hwm::task_queue &tq, int thread_index)
@@ -51,8 +52,8 @@ int main()
 
     std::vector<std::thread> workers;
 
-    //! 30個分のタスクを生成。
-    for(int thread_index = 0; thread_index < 30; ++thread_index) {
+    //! ワーカースレッドを生成。
+    for(int thread_index = 0; thread_index < kNumThreads; ++thread_index) {
         hwm::mcout << "Create worker thread[" << thread_index << "]" << std::endl;
 
         std::thread worker(worker_thread, std::ref(tq), thread_index);
