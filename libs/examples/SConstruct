@@ -11,11 +11,12 @@ if sys.platform == "win32":
     env = Environment(
         PATH = path,
         CXX = "cl.exe",
-        CCFLAGS = "/EHsc /Gm /W3 /nologo /Gd /Od /Zi /MTd /D_DEBUG",
+        CCFLAGS = "/EHsc /Gm /W3 /wd4819 /nologo /Gd /Od /Zi /MTd /D_DEBUG",
         CPPPATH = cpppath,
         LINKFLAGS = "/DEBUG /PDB:${TARGET}.pdb"
         )
 else:
+
     try:
         cxx = os.environ['CXX']
     except KeyError:
