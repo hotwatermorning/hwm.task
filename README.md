@@ -52,7 +52,9 @@ int main()
 `hwm::task_queue`はコンストラクタでスレッドを生成し、デストラクタでスレッドを終了する。
 そのため、グローバル変数として`hwm::task_queue`のオブジェクトを定義したりすると、`main()`関数の実行前にスレッドが作成されたり、`main()`関数の実行後にスレッドが終了したりして、予期せぬエラーを引き起こすことがあるので注意する。
 
-Copyright hotwatermorning 2013 - 2013.  
+### LICENSE
+
+Copyright hotwatermorning 2013 - 2015.  
 Distributed under the Boost Software License, Version 1.0.  
 (See accompanying file LICENSE_1_0.txt or copy at  
 http://www.boost.org/LICENSE_1_0.txt)  
