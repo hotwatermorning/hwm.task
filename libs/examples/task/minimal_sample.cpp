@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <hwm/task/task_queue.hpp>
+#include "../utils/stream_mutex.hpp"
 
 int main()
 {
@@ -17,7 +18,7 @@ int main()
         tq.enqueue(
             //! タスクキュー内のスレッドで起動する関数
             [](int x1, int x2) -> int {
-                std::cout << (x1 + x2) << std::endl;
+                hwm::mcout << (x1 + x2) << std::endl;
                 return x1 + x2;
             },
             //! 関数に渡す引数
@@ -27,5 +28,5 @@ int main()
     //! 引数に渡したラムダ式が非同期で実行される
 
     //! ラムダ式の実行完了を待って、結果を表示
-    std::cout << "calculated value : " << f.get() << std::endl;
+    hwm::mcout << "calculated value : " << f.get() << std::endl;
 }
