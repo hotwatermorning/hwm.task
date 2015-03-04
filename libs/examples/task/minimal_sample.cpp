@@ -28,5 +28,12 @@ int main()
     //! 引数に渡したラムダ式が非同期で実行される
 
     //! ラムダ式の実行完了を待って、結果を表示
-    hwm::mcout << "calculated value : " << f.get() << std::endl;
+    int const result = f.get();
+
+    hwm::mcout << "calculated value : " << result << std::endl;
 }
+
+//! ちなみに、hwm::mcout << f.get() << ...とすると、
+//! タスクキューに渡したラムダ式内の `hwm::mcout` で取得するロックでデッドロックが発生する可能性がある。
+//! (mainスレッドがfuture::get()でブロックし、タスクキューのスレッドがmcoutの取得でブロックする)
+//! そのため、先にresult変数に結果を受け取るようにしている。
