@@ -24,10 +24,10 @@ else:
     env = Environment(
         ENV = os.environ,
         CXX = cxx,
-        CCFLAGS = '-Og -Wall -std=c++11',
+        CCFLAGS = '-g -O0 -Wall -std=c++11',
         CPPPATH = ['#../../'],
         LIBPATH = ['/usr/local/lib, /usr/local/lib64'],
-        LIBS    = ['stdc++', 'pthread'],
+        LIBS    = ['pthread'],
         PROGSUFFIX = '.out'
         )
 
