@@ -34,4 +34,4 @@ else:
 
 Export('env')
 
-SConscript('./task/SConscript', variant_dir='bin')
+SConscript('./task/SConscript', variant_dir='bin', duplicate=0)
